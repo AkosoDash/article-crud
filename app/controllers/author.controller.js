@@ -13,7 +13,8 @@ export const loginAuthor = async(req, res) => {
                 message: "User Not Found"
             })
         } else {
-            bcrypt.compare(password, author.password).then(function (result){
+            try {
+                const result = bcrypt.compare(password, author.password)
                 if (result) {
                     const maxAge = 3 * 60 * 60;
                     const token = jwt.sign(
@@ -35,7 +36,11 @@ export const loginAuthor = async(req, res) => {
                 } else {
                     res.status(400).json({ message: "Login not succesful" });
                 }
-            })
+            } catch (error) {
+                res.status(500).send({
+                    message: error
+                })
+            }
         }
     }
     catch (err) {
@@ -48,57 +53,55 @@ export const loginAuthor = async(req, res) => {
 
 export const registerAuthor = async (req, res) => {
     const {username, password, email, telp} = req.body;
-
-    bcrypt.hash(password, 10).then(async(hash) => {
-        try{
-            const author = await Author.findOne({username});
-            if (author) {
-                res.status(202).send({
-                    message: "Username Registered",
-                    data: author._id
-                })
-            } else {
-                await Author.create({
-                    username,
-                    password: hash,
-                    email,
-                    telp
-                })
-                const maxAge = 3 * 60 * 60;
-                const token = jwt.sign(
-                    { username, email, telp },
-                    jwtSecret,
-                    {expiresIn: maxAge}
-                );
-                res.cookie("jwt", token, {
-                    httpOnly: true,
-                    maxAge: maxAge * 1000, // 3hrs in ms
-                });
-                res.status(201).json({
-                    message: "User successfully created",
-                    token: token
-                });
-
-            }
-        }
-        catch (err) {
-            res.status(500).send({
-            message:
-                err.message
+    try {
+        const hash = await bcrypt.hash(password, 10)
+        const author = await Author.findOne({username});
+        if (author) {
+            res.status(202).send({
+                message: "Username Registered",
+                data: author._id
+            })
+        } else {
+            await Author.create({
+                username,
+                password: hash,
+                email,
+                telp
+            })
+            const maxAge = 3 * 60 * 60;
+            const token = jwt.sign(
+                { username, email, telp },
+                jwtSecret,
+                {expiresIn: maxAge}
+            );
+            res.cookie("jwt", token, {
+                httpOnly: true,
+                maxAge: maxAge * 1000, // 3hrs in ms
+            });
+            res.status(201).json({
+                message: "User successfully created",
+                token: token
             });
         }
-    })
+    } catch (error) {
+        res.status(500).send({
+            message: error
+        })
+    }
 }
 
 export const getAuthorById = (req, res) => {
     const id = req.params.id
-    Author.findById(id)
-    .then(data => {
-        res.send(data)
-    })
-    .catch(err => {
-        res.status(500).json({ message: "Error Bang", error: err })
-    })
+    const author = Author.findById(id)
+    try {
+        res.send({
+            data: author
+        })
+    } catch (error) {
+        res.status(500).send({
+            message: error
+        })
+    }
 }
 
 export const logoutAuthor = (req, res) => {

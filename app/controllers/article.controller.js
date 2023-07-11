@@ -1,19 +1,22 @@
 import db from "../models/index.js";
 const Article = db.articles;
 
-export const getArticleList = (req, res) => {
+export const getArticleList = async(req, res) => {
     const {query} = req
     const {published} = query
 
     
 
-    Article.find({published : published === 'true' ? true : false})
-    .then(data => {
-        res.send(data)
-    })
-    .catch(err => {
-        res.status(500).json({ message: "Error Bang", error: err })
-    })
+    const article = await Article.find({published : published === 'true' ? true : false})
+    try {
+        res.status(200).send({
+            data: article
+        })
+    } catch (error) {
+        res.status(500).send({
+            message: error
+        })
+    }
 }
 
 export const publishArticle = (req, res) => {
@@ -24,66 +27,71 @@ export const publishArticle = (req, res) => {
         published: req.body.published
     })  
 
-    article
-        .save(article)
-        .then(data => {
-            res.send(data);
+    try {
+        article.save(article)
+        res.status(200).send({
+            data: article
         })
-        .catch(err => {
-            res.status(500).send({
-            message:
-                err.message || "Some error occurred while creating the Tutorial."
-            });        
+    } catch (error) {
+        res.status(500).send({
+            message: error
         })
+    }
 }
 
-export const updateArticle = (req, res) => {
+export const updateArticle = async (req, res) => {
     if (!req.body) {
         return res.status(400).send({
           message: "Data to update can not be empty!"
         });
     }
       
-    const id = req.params.id
-
-    Article
-        .findByIdAndUpdate(id, req.body, {useAndModify: false})
-        .then(data => {
-            if (!data) {
-                res.status(404).send({
-                  message: `Cannot update Article with id=${id}. Maybe Article was not found!`
-                });
-              } else res.send({ message: "Article was updated successfully." });
+    try {
+        const id = req.params.id
+        const article = await Article.findByIdAndUpdate(id, req.body, {useAndModify: false})
+        if (!article) {
+            res.status(404).send({
+                message: `Cannot update Article with id = ${id}. Maybe article was not found!`
             })
-        .catch(err => {
-            res.status(500).send({
-            message:
-                err.message || "Some error occurred while creating the Article."
-            });        
+        } else {
+            res.status(200).send({
+                message: "Article was updated successfully"
+            })
+        }
+    } catch (error) {
+        res.status(500).send({
+            message: error.message || "Some error occurred while creating the Article."
+        });
+    }
+}
+
+export const deleteArticleById = async (req, res) => {
+    const id = req.params.id
+
+    try {
+        const article = await Article.findByIdAndRemove(id)
+        res.status(200).send({
+            data: article
         })
+    } catch (error) {
+        res.status(500).send({
+            message: error
+        })
+    }
 }
 
-export const deleteArticleById = (req, res) => {
+export const getArticleById = async (req, res) => {
     const id = req.params.id
-
-    Article.findByIdAndRemove(id)
-    .then(data => {
-        res.send(data)
-    })
-    .catch(err => {
-        res.status(500).json({ message: "Error Bang", error: err })
-    })
-}
-
-export const getArticleById = (req, res) => {
-    const id = req.params.id
-    Article.findById(id)
-    .then(data => {
-        res.send(data)
-    })
-    .catch(err => {
-        res.status(500).json({ message: "Error Bang", error: err })
-    })
+    try {
+        const article = await Article.findById(id)
+        res.status(500).send({
+            data: article
+        })
+    } catch (error) {
+        res.status(500).send({
+            message: error
+        })
+    }
 }
 
 export default {getArticleList, publishArticle, updateArticle, deleteArticleById, getArticleById};
