@@ -1,12 +1,19 @@
 import db from "../models/index.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import authorValidation from "../validation/author.validation.js";
+
+const loginValidator = authorValidation.authorLoginValidatorFunction;
+const registerValidator = authorValidation.authorRegisterValidatorFunction;
 const Author = db.author;
 const jwtSecret = '73cef8336a4b3d5e247e590e7ac3d8ad0eaebd8d99bf76c17070adbd78a8d6e02fc511';
 
 export const loginAuthor = async(req, res) => {
-    const {username, password} = req.body;
     try{
+        const {body} = req;
+        const registerData = loginValidator(body);
+        const username = registerData.getUsername();
+        const password = registerData.getPassword();
         const author = await Author.findOne({username});
         if (!author) {
             res.status(202).send({
@@ -52,10 +59,16 @@ export const loginAuthor = async(req, res) => {
 }
 
 export const registerAuthor = async (req, res) => {
-    const {username, password, email, telp} = req.body;
     try {
+        const {body} = req;
+        const registerData = registerValidator(body);
+        const username = registerData.getUsername();
+        const password = registerData.getPassword();
+        const telp = registerData.getTelp();
+        const email = registerData.getEmail();
         const hash = await bcrypt.hash(password, 10)
         const author = await Author.findOne({username});
+
         if (!author) {
             await Author.create({
                 username,
@@ -85,7 +98,7 @@ export const registerAuthor = async (req, res) => {
         }
     } catch (error) {
         res.status(500).send({
-            message: error
+            message: error.message
         })
     }
 }
