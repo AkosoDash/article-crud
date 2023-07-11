@@ -5,10 +5,8 @@ export const getArticleList = async(req, res) => {
     const {query} = req
     const {published} = query
 
-    
-
-    const article = await Article.find({published : published === 'true' ? true : false})
     try {
+        const article = await Article.find({published : published === 'true' ? true : false})
         res.status(200).send({
             data: article
         })
@@ -19,8 +17,8 @@ export const getArticleList = async(req, res) => {
     }
 }
 
-export const publishArticle = (req, res) => {
-    const article = new Article({
+export const publishArticle = async (req, res) => {
+    const article = await new Article({
         title: req.body.title,
         author: req.body.author,
         text: req.body.text,
@@ -40,10 +38,27 @@ export const publishArticle = (req, res) => {
 }
 
 export const updateArticle = async (req, res) => {
-    if (!req.body) {
-        return res.status(400).send({
-          message: "Data to update can not be empty!"
-        });
+    const {title, author, text, published} = req.body;
+    
+    if(!title){
+        return res.send({
+            message: "Field title tidak boleh kosong"
+        })
+    }
+    if(!author){
+        return res.send({
+            message: "Field author tidak boleh kosong"
+        })
+    }
+    if(!text){
+        return res.send({
+            message: "Field text tidak boleh kosong"
+        })
+    }
+    if(!published){
+        return res.send({
+            message: "Field published tidak boleh kosong"
+        })
     }
       
     try {
@@ -84,7 +99,7 @@ export const getArticleById = async (req, res) => {
     const id = req.params.id
     try {
         const article = await Article.findById(id)
-        res.status(500).send({
+        res.status(200).send({
             data: article
         })
     } catch (error) {

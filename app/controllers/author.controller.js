@@ -56,12 +56,7 @@ export const registerAuthor = async (req, res) => {
     try {
         const hash = await bcrypt.hash(password, 10)
         const author = await Author.findOne({username});
-        if (author) {
-            res.status(202).send({
-                message: "Username Registered",
-                data: author._id
-            })
-        } else {
+        if (!author) {
             await Author.create({
                 username,
                 password: hash,
@@ -82,6 +77,11 @@ export const registerAuthor = async (req, res) => {
                 message: "User successfully created",
                 token: token
             });
+        } else {
+            res.status(202).send({
+                message: "Username Registered",
+                data: author._id
+            })
         }
     } catch (error) {
         res.status(500).send({
